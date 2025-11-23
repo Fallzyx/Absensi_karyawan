@@ -22,7 +22,7 @@ absensi-karyawan/
 
  Cara Menjalankan
 - Clone repository
-git clone https://github.com/username/absensi-karyawan.git
+https://github.com/Fallzyx(username)/Absensi_karyawan.git
 cd absensi-karyawan
 npm install
 - Konfigurasi database

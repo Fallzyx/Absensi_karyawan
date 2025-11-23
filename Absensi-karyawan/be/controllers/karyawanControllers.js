@@ -1,4 +1,4 @@
-const KaryawanModel = require('../models/karyawanModel');
+const KaryawanModel = require('../models/karyawanModels');
 
 class KaryawanController {
     static async getAllKaryawan(req, res) {

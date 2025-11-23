@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const KaryawanController = require('../controllers/karyawanController');
+const KaryawanController = require('../controllers/karyawanControllers');
 
 // GET /api/karyawan - Get all karyawan
 router.get('/', KaryawanController.getAllKaryawan);

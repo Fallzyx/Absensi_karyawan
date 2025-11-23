@@ -15,6 +15,21 @@ class AbsensiModel {
         }
     }
 
+    // TAMBAHKAN METHOD INI
+    static async getById(id) {
+        try {
+            const [rows] = await db.execute(`
+                SELECT a.*, k.nama, k.jabatan, k.departemen 
+                FROM absensi a 
+                JOIN karyawan k ON a.karyawan_id = k.id 
+                WHERE a.id = ?
+            `, [id]);
+            return rows[0];
+        } catch (error) {
+            throw new Error(`Database error: ${error.message}`);
+        }
+    }
+
     static async getByDate(tanggal) {
         try {
             const [rows] = await db.execute(`

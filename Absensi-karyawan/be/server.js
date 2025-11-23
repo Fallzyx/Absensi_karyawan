@@ -9,7 +9,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Routes sementara tanpa require yang error
+// Import routes
+const karyawanRoutes = require('./routes/karyawanRoutes');
+const absensiRoutes = require('./routes/absensiRoutes');
+
+// Use routes
+app.use('/api/karyawan', karyawanRoutes);
+app.use('/api/absensi', absensiRoutes);
+
+// Basic routes
 app.get('/', (req, res) => {
     res.json({ 
         message: 'Absensi Supermarket API',
@@ -27,12 +35,11 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Simple karyawan route untuk testing
-app.get('/api/karyawan', (req, res) => {
-    res.json({
-        success: true,
-        message: 'Karyawan endpoint is working',
-        data: []
+// Error handling untuk route tidak ditemukan
+app.use('*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
     });
 });
 

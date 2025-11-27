@@ -1,9 +1,10 @@
+// models/karyawanModels.js
 const db = require('../config/database');
 
 class KaryawanModel {
     static async getAll() {
         try {
-            const [rows] = await db.execute('SELECT * FROM karyawan ORDER BY created_at DESC');
+            const [rows] = await db.execute('SELECT id, nama, email, jabatan, departemen, telepon, role FROM karyawan ORDER BY created_at DESC');
             return rows;
         } catch (error) {
             throw new Error(`Database error: ${error.message}`);
@@ -21,10 +22,12 @@ class KaryawanModel {
 
     static async create(karyawanData) {
         try {
-            const { nama, jabatan, departemen, email, telepon } = karyawanData;
+            const { nama, jabatan, departemen, email, telepon, password, role = 'karyawan' } = karyawanData;
+            
+            // ✅ Query dengan password
             const [result] = await db.execute(
-                'INSERT INTO karyawan (nama, jabatan, departemen, email, telepon) VALUES (?, ?, ?, ?, ?)',
-                [nama, jabatan, departemen, email, telepon]
+                'INSERT INTO karyawan (nama, jabatan, departemen, email, telepon, password, role) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [nama, jabatan, departemen, email, telepon || null, password || null, role]
             );
             return result;
         } catch (error) {
@@ -37,7 +40,7 @@ class KaryawanModel {
             const { nama, jabatan, departemen, email, telepon } = karyawanData;
             const [result] = await db.execute(
                 'UPDATE karyawan SET nama = ?, jabatan = ?, departemen = ?, email = ?, telepon = ? WHERE id = ?',
-                [nama, jabatan, departemen, email, telepon, id]
+                [nama, jabatan, departemen, email, telepon || null, id]
             );
             return result;
         } catch (error) {

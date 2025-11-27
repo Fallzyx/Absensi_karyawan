@@ -1,26 +1,23 @@
+// routes/absensiRoutes.js
 const express = require('express');
 const router = express.Router();
 const AbsensiController = require('../controllers/absensiControllers');
 
-// GET /api/absensi - Get all absensi
-router.get('/', AbsensiController.getAllAbsensi);
+// Middleware: HARUS LOGIN
+const requireLogin = (req, res, next) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ success: false, message: "Silakan login terlebih dahulu" });
+  }
+  next();
+};
 
-// GET /api/absensi/hari-ini - Get today's absensi
-router.get('/hari-ini', AbsensiController.getAbsensiHariIni);
+// === SEMUA ROUTE ABSENSI HARUS LOGIN ===
+router.get('/', requireLogin, AbsensiController.getAllAbsensi);
+router.get('/hari-ini', requireLogin, AbsensiController.getAbsensiHariIni);
+router.get('/date/:tanggal', requireLogin, AbsensiController.getAbsensiByDate);
+router.get('/:id', requireLogin, AbsensiController.getAbsensiById);
 
-// GET /api/absensi/date/:tanggal - Get absensi by date
-router.get('/date/:tanggal', AbsensiController.getAbsensiByDate);
-
-// GET /api/absensi/:id - Get absensi by ID
-router.get('/:id', AbsensiController.getAbsensiById);
-
-// POST /api/absensi/checkin - Check-in
-router.post('/checkin', AbsensiController.checkIn);
-
-// PUT /api/absensi/checkout/:id - Check-out
-router.put('/checkout/:id', AbsensiController.checkOut);
-
-// PUT /api/absensi/:id - Update status
-router.put('/:id', AbsensiController.updateStatus);
+router.post('/checkin', requireLogin, AbsensiController.checkIn);
+router.put('/checkout/:id', requireLogin, AbsensiController.checkOut);
 
 module.exports = router;

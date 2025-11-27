@@ -1,3 +1,4 @@
+// src/context/ThemeContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const ThemeContext = createContext();
@@ -11,37 +12,55 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Check saved theme preference
+  // Initialize theme dari localStorage atau system preference
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('absensi_theme');
     if (savedTheme) {
-      setIsDarkMode(savedTheme === 'dark');
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
+      return savedTheme === 'dark';
     }
+    // Fallback ke system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state setelah component mount
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
+  // Apply theme ke DOM
   useEffect(() => {
-    // Apply theme to document
+    if (!mounted) return;
+
+    const root = document.documentElement;
+    
     if (isDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      root.classList.add('dark');
+      localStorage.setItem('absensi_theme', 'dark');
     } else {
-      document.documentElement.removeAttribute('data-theme');
+      root.classList.remove('dark');
+      localStorage.setItem('absensi_theme', 'light');
     }
-    localStorage.setItem('absensi_theme', isDarkMode ? 'dark' : 'light');
-  }, [isDarkMode]);
+  }, [isDarkMode, mounted]);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(prev => !prev);
+  };
+
+  const setLightMode = () => {
+    setIsDarkMode(false);
+  };
+
+  const setDarkMode = () => {
+    setIsDarkMode(true);
   };
 
   const value = {
     isDarkMode,
-    toggleTheme
+    toggleTheme,
+    setLightMode,
+    setDarkMode,
   };
 
   return (

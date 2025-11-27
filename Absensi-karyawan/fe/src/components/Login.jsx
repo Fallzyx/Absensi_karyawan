@@ -1,18 +1,14 @@
+// src/components/Login.jsx
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-// Mock users (hanya untuk demo)
-const mockUsers = [
-  { id: 1, username: 'admin', password: 'admin123', role: 'admin', nama: 'Administrator' },
-  { id: 2, username: 'manager', password: 'manager123', role: 'manager', nama: 'Store Manager' },
-  { id: 3, username: 'karyawan', password: 'karyawan123', role: 'user', nama: 'karyawan supermarket' }
-]; 
+import Swal from 'sweetalert2';
 
 const Login = () => {
-  const [formData, setFormData] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   const { login } = useAuth();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -21,32 +17,61 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
-    setTimeout(() => {
-      const user = mockUsers.find(u => 
-        u.username === formData.username && u.password === formData.password
-      );
+    try {
+      await login(formData.email, formData.password);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil!',
+        text: 'Selamat datang kembali',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
 
-      if (user) {
-        login(user);
-      } else {
-        setError('Username atau password salah');
-      }
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Login error:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal',
+        text: err.response?.data?.message || 'Email atau password salah!',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  const quickLogin = (username, password) => {
-    setFormData({ username, password });
-    // Auto submit setelah isi form
-    setTimeout(() => {
-      const form = document.querySelector('form');
-      if (form) form.requestSubmit();
-    }, 100);
+  // Quick login untuk testing
+  const quickLogin = async (email, password) => {
+    setLoading(true);
+    try {
+      await login(email, password);
+      Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil!',
+        timer: 1500,
+        showConfirmButton: false,
+        toast: true,
+        position: 'top-end'
+      });
+      navigate('/dashboard');
+    } catch (err) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal',
+        text: 'Pastikan akun sudah terdaftar di database',
+        confirmButtonColor: '#ef4444'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,32 +82,30 @@ const Login = () => {
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center">
+            <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
             <h2 className="text-3xl font-bold text-white">Sistem Absensi</h2>
             <p className="text-indigo-100 mt-2 text-lg">Supermarket Attendance System</p>
           </div>
 
           <div className="p-8">
-            {/* Error */}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
+                  Email
                 </label>
                 <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                  placeholder="Masukkan username"
+                  placeholder="contoh: budi@supermarket.com"
                 />
               </div>
 
@@ -110,39 +133,25 @@ const Login = () => {
                     : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
                 }`}
               >
-                {loading ? 'Sedang Login...' : 'Login'}
+                {loading ? 'Sedang Login...' : 'MASUK'}
               </button>
             </form>
 
-            {/* Quick Login Demo */}
-            <div className="mt-10">
-              <p className="text-center text-sm text-gray-600 mb-4 font-medium">
-                Akun Demo – Klik untuk login cepat
+            {/* Quick Login */}
+           
+
+            {/* Register Link */}
+            <div className="text-center mt-6">
+              <p className="text-sm text-gray-600">
+                Belum punya akun?{' '}
+                <Link to="/register" className="text-purple-600 font-bold hover:text-purple-700 hover:underline">
+                  Daftar di sini
+                </Link>
               </p>
-              <div className="grid grid-cols-1 gap-3">
-                <button
-                  onClick={() => quickLogin('admin', 'admin123')}
-                  className="py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition"
-                >
-                  Admin (admin / admin123)
-                </button>
-                <button
-                  onClick={() => quickLogin('manager', 'manager123')}
-                  className="py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition"
-                >
-                  Manager (manager / manager123)
-                </button>
-                <button
-                  onClick={() => quickLogin('karyawan', 'karyawan123')}
-                  className="py-3 px-4 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition"
-                >
-                  Karyawan (karyawan / karyawan123)
-                </button>
-              </div>
             </div>
 
             <p className="text-center text-xs text-gray-500 mt-8">
-              © 2025 Supermarket Attendance System • Demo Version
+              © 2025 Supermarket Attendance System
             </p>
           </div>
         </div>

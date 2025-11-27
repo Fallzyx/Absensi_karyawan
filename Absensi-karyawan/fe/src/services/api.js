@@ -1,32 +1,37 @@
+// src/services/api.js
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Handle API responses dengan better error handling
+// Helper: handle semua response + error parsing
 const handleResponse = async (response) => {
   const text = await response.text();
-  
+
   if (!text) {
-    throw new Error('Empty response from server');
+    throw new Error('Server tidak merespon (empty response)');
   }
 
   let data;
   try {
     data = JSON.parse(text);
-  } catch (error) {
-    console.error('JSON parse error:', error);
-    throw new Error('Invalid JSON response from server');
+  } catch (err) {
+    console.error('Failed to parse JSON:', text);
+    throw new Error('Respons server bukan JSON valid');
   }
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
+    const msg = data.message || data.error || `HTTP ${response.status}`;
+    throw new Error(msg);
   }
 
   return data;
 };
 
-// Generic fetch function dengan error handling
-const fetchAPI = async (url, options = {}) => {
+// Generic fetch dengan session cookie otomatis
+const fetchAPI = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+
   try {
     const response = await fetch(url, {
+      credentials: 'include', // PENTING! Biar cookie session ikut terkirim
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -36,42 +41,58 @@ const fetchAPI = async (url, options = {}) => {
 
     return await handleResponse(response);
   } catch (error) {
-    console.error('API call failed:', error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Tidak bisa terhubung ke server. Pastikan backend jalan di port 5000');
+    }
     throw error;
   }
 };
 
+// ===================== KARYAWAN API =====================
 export const karyawanAPI = {
-  getAll: () => fetchAPI(`${API_BASE_URL}/karyawan`),
-  getById: (id) => fetchAPI(`${API_BASE_URL}/karyawan/${id}`),
-  create: (data) => fetchAPI(`${API_BASE_URL}/karyawan`, {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  update: (id, data) => fetchAPI(`${API_BASE_URL}/karyawan/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  }),
-  delete: (id) => fetchAPI(`${API_BASE_URL}/karyawan/${id}`, { 
-    method: 'DELETE' 
-  })
+  getAll: () => fetchAPI('/karyawan'),
+  getById: (id) => fetchAPI(`/karyawan/${id}`),
+  create: (data) => fetchAPI('/karyawan', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id, data) => fetchAPI(`/karyawan/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id) => fetchAPI(`/karyawan/${id}`, { method: 'DELETE' }),
 };
 
+// ===================== ABSENSI API =====================
 export const absensiAPI = {
-  getAll: () => fetchAPI(`${API_BASE_URL}/absensi`),
-  getHariIni: () => fetchAPI(`${API_BASE_URL}/absensi/hari-ini`),
-  getByDate: (tanggal) => fetchAPI(`${API_BASE_URL}/absensi/date/${tanggal}`),
-  getById: (id) => fetchAPI(`${API_BASE_URL}/absensi/${id}`),
-  checkIn: (data) => fetchAPI(`${API_BASE_URL}/absensi/checkin`, {
+  getAll: () => fetchAPI('/absensi'),
+  getHariIni: () => fetchAPI('/absensi/hari-ini'),                    // SUDAH ADA
+  getByDate: (tanggal) => fetchAPI(`/absensi/date/${tanggal}`),       // SUDAH ADA
+  getByKaryawan: (karyawanId) => fetchAPI(`/absensi/karyawan/${karyawanId}`), // INI YANG DULU HILANG!
+  getById: (id) => fetchAPI(`/absensi/${id}`),
+
+  checkIn: (data) => fetchAPI('/absensi/checkin', {
     method: 'POST',
     body: JSON.stringify(data)
   }),
-  checkOut: (id, data) => fetchAPI(`${API_BASE_URL}/absensi/checkout/${id}`, {
+
+  checkOut: (id, data) => fetchAPI(`/absensi/checkout/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
-  updateStatus: (id, data) => fetchAPI(`${API_BASE_URL}/absensi/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  })
 };
+
+// ===================== AUTH API =====================
+export const authAPI = {
+  login: (email, password) =>
+    fetchAPI('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    }),
+
+  register: (data) =>
+    fetchAPI('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  me: () => fetchAPI('/auth/me'), // cek user yang login
+
+  logout: () => fetchAPI('/auth/logout', { method: 'POST' }),
+};
+
+export default fetchAPI;
